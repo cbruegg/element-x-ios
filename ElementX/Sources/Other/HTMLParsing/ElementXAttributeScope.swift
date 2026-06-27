@@ -73,6 +73,29 @@ enum InlineCodeAttribute: AttributedStringKey {
     static let name = "MXInlineCodeAttribute"
 }
 
+enum TableAttribute: AttributedStringKey {
+    enum CellAlignment: Hashable {
+        case left, center, right
+    }
+    
+    struct Row: Hashable {
+        let cells: [Cell]
+    }
+    
+    struct Cell: Hashable {
+        let content: String
+        let alignment: CellAlignment
+        let isHeader: Bool
+    }
+    
+    struct Value: Hashable {
+        let headerRows: [Row]
+        let bodyRows: [Row]
+    }
+    
+    static let name = "MXTableAttribute"
+}
+
 // periphery: ignore - required to make NSAttributedString to AttributedString conversion even if not used directly
 nonisolated extension AttributeScopes {
     struct ElementXAttributes: AttributeScope {
@@ -90,6 +113,7 @@ nonisolated extension AttributeScopes {
         
         let codeBlock: CodeBlockAttribute
         let inlineCode: InlineCodeAttribute
+        let table: TableAttribute
         
         let swiftUI: SwiftUIAttributes
         let uiKit: UIKitAttributes

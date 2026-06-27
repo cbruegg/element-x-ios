@@ -986,6 +986,133 @@ struct AttributedStringBuilderTests {
         _ = try #require(attributedString2.runs.first { $0.link != nil }?.link, "Couldn't find the link")
     }
     
+    // MARK: - Tables
+    
+    @Test
+    func simpleTable() throws {
+        let htmlString = """
+        <table>
+        <thead><tr><th>Name</th><th>Role</th></tr></thead>
+        <tbody>
+        <tr><td>Alice</td><td>Admin</td></tr>
+        <tr><td>Bob</td><td>Editor</td></tr>
+        </tbody>
+        </table>
+        """
+        
+        let attributedString = try #require(attributedStringBuilder.fromHTML(htmlString), "Could not build the attributed string")
+        
+        let components = attributedString.formattedComponents
+        let tableComponent = try #require(components.first { $0.type == .table }, "No table component found")
+        
+        let tableData = try #require(tableComponent.attributedString.runs.first(where: { $0.table != nil })?.table, "No table data found")
+        
+        #expect(tableData.headerRows.count == 1)
+        #expect(tableData.bodyRows.count == 2)
+        #expect(tableData.headerRows[0].cells.count == 2)
+        #expect(tableData.bodyRows[0].cells.count == 2)
+        
+        #expect(tableData.headerRows[0].cells[0].content == "Name")
+        #expect(tableData.bodyRows[0].cells[0].content == "Alice")
+        #expect(tableData.bodyRows[1].cells[1].content == "Editor")
+    }
+    
+    @Test
+    func tableWithAlignment() throws {
+        let htmlString = """
+        <table>
+        <tbody>
+        <tr><td align="right">500</td><td>Left</td></tr>
+        <tr><td align="center">Mid</td><td>Left</td></tr>
+        </tbody>
+        </table>
+        """
+        
+        let attributedString = try #require(attributedStringBuilder.fromHTML(htmlString), "Could not build the attributed string")
+        
+        let components = attributedString.formattedComponents
+        let tableComponent = try #require(components.first { $0.type == .table }, "No table component found")
+        
+        let tableData = try #require(tableComponent.attributedString.runs.first(where: { $0.table != nil })?.table, "No table data found")
+        
+        #expect(tableData.bodyRows[0].cells[0].alignment == .right)
+        #expect(tableData.bodyRows[0].cells[1].alignment == .left)
+        #expect(tableData.bodyRows[1].cells[0].alignment == .center)
+    }
+    
+    @Test
+    func tableWithInlineFormatting() throws {
+        let htmlString = """
+        <table>
+        <tbody>
+        <tr><td><b>Bold</b> text</td><td><a href="https://matrix.org">Link</a></td></tr>
+        </tbody>
+        </table>
+        """
+        
+        let attributedString = try #require(attributedStringBuilder.fromHTML(htmlString), "Could not build the attributed string")
+        
+        let components = attributedString.formattedComponents
+        let tableComponent = try #require(components.first { $0.type == .table }, "No table component found")
+        
+        let tableData = try #require(tableComponent.attributedString.runs.first(where: { $0.table != nil })?.table, "No table data found")
+        
+        // Cell content is stored as plain text (inline formatting is not preserved in cell data)
+        #expect(tableData.bodyRows[0].cells[0].content == "Bold text")
+        #expect(tableData.bodyRows[0].cells[1].content == "Link")
+    }
+    
+    @Test
+    func tableWithSurroundingText() throws {
+        let htmlString = """
+        <p>Before the table</p>
+        <table>
+        <tbody><tr><td>Cell</td></tr></tbody>
+        </table>
+        <p>After the table</p>
+        """
+        
+        let attributedString = try #require(attributedStringBuilder.fromHTML(htmlString), "Could not build the attributed string")
+        
+        let components = attributedString.formattedComponents
+        
+        #expect(components.contains { $0.type == .plainText })
+        #expect(components.contains { $0.type == .table })
+        
+        let plainTextComponents = components.filter { $0.type == .plainText }
+        #expect(plainTextComponents.count >= 2)
+    }
+    
+    @Test
+    func tableWithoutExplicitSections() throws {
+        let htmlString = "<table><tr><td>A</td><td>B</td></tr><tr><td>C</td><td>D</td></tr></table>"
+        
+        let attributedString = try #require(attributedStringBuilder.fromHTML(htmlString), "Could not build the attributed string")
+        
+        let components = attributedString.formattedComponents
+        let tableComponent = try #require(components.first { $0.type == .table }, "No table component found")
+        
+        let tableData = try #require(tableComponent.attributedString.runs.first(where: { $0.table != nil })?.table, "No table data found")
+        
+        #expect(tableData.headerRows.isEmpty)
+        #expect(tableData.bodyRows.count == 2)
+    }
+    
+    @Test
+    func tableAtEndOfMessage() throws {
+        let htmlString = """
+        <p>Some text</p>
+        <table>
+        <tbody><tr><td>Cell</td></tr></tbody>
+        </table>
+        """
+        
+        let attributedString = try #require(attributedStringBuilder.fromHTML(htmlString), "Could not build the attributed string")
+        
+        let components = attributedString.formattedComponents
+        #expect(components.contains { $0.type == .table }, "Table at end of message should not be stripped")
+    }
+    
     // MARK: - Private
     
     private func checkLinkIn(attributedString: AttributedString?, expectedLink: String, expectedRuns: Int) throws {

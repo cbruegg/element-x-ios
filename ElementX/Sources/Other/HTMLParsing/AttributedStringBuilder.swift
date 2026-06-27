@@ -34,6 +34,7 @@ nonisolated extension NSAttributedString.Key {
     static let MatrixAllUsersMention: NSAttributedString.Key = .init(rawValue: AllUsersMentionAttribute.name)
     static let CodeBlock: NSAttributedString.Key = .init(rawValue: CodeBlockAttribute.name)
     static let InlineCode: NSAttributedString.Key = .init(rawValue: InlineCodeAttribute.name)
+    static let MatrixTable: NSAttributedString.Key = .init(rawValue: TableAttribute.name)
 }
 
 nonisolated struct AttributedStringBuilder: AttributedStringBuilderProtocol {
@@ -268,6 +269,17 @@ nonisolated struct AttributedStringBuilder: AttributedStringBuilderProtocol {
                     content = NSMutableAttributedString(string: "[img]")
                 }
                 
+            case "table":
+                if let tableData = parseTableData(from: childElement, documentBody: documentBody, preserveFormatting: preserveFormatting) {
+                    let placeholder = NSMutableAttributedString(string: "\n")
+                    placeholder.addAttribute(.MatrixTable, value: tableData, range: NSRange(location: 0, length: 1))
+                    content = placeholder
+                }
+                
+            case "thead", "tbody", "tfoot", "caption":
+                // Transparent wrappers — handled by the table case above
+                break
+                
             default:
                 content = attributedString(element: childElement, documentBody: documentBody, preserveFormatting: preserveFormatting, listTag: listTag, listIndex: &childIndex, indentLevel: indentLevel)
             }
@@ -276,6 +288,81 @@ nonisolated struct AttributedStringBuilder: AttributedStringBuilderProtocol {
         }
         
         return result
+    }
+    
+    // MARK: - Table Parsing
+    
+    private func parseTableData(from tableElement: Element,
+                                documentBody: Element,
+                                preserveFormatting: Bool) -> TableAttribute.Value? {
+        var headerRows = [TableAttribute.Row]()
+        var bodyRows = [TableAttribute.Row]()
+        
+        for child in tableElement.children() {
+            let tag = child.tagName().lowercased()
+            switch tag {
+            case "thead":
+                headerRows.append(contentsOf: extractRows(from: child, documentBody: documentBody, preserveFormatting: preserveFormatting))
+            case "tbody", "tfoot":
+                bodyRows.append(contentsOf: extractRows(from: child, documentBody: documentBody, preserveFormatting: preserveFormatting))
+            case "tr":
+                bodyRows.append(parseTableRow(from: child, documentBody: documentBody, preserveFormatting: preserveFormatting))
+            default:
+                break
+            }
+        }
+        
+        guard !headerRows.isEmpty || !bodyRows.isEmpty else {
+            return nil
+        }
+        
+        return TableAttribute.Value(headerRows: headerRows, bodyRows: bodyRows)
+    }
+    
+    private func extractRows(from element: Element,
+                             documentBody: Element,
+                             preserveFormatting: Bool) -> [TableAttribute.Row] {
+        element.children().compactMap { child -> TableAttribute.Row? in
+            guard child.tagName().lowercased() == "tr" else {
+                return nil
+            }
+            return parseTableRow(from: child, documentBody: documentBody, preserveFormatting: preserveFormatting)
+        }
+    }
+    
+    private func parseTableRow(from rowElement: Element,
+                               documentBody: Element,
+                               preserveFormatting: Bool) -> TableAttribute.Row {
+        var cells = [TableAttribute.Cell]()
+        
+        for child in rowElement.children() {
+            let tag = child.tagName().lowercased()
+            guard tag == "td" || tag == "th" else {
+                continue
+            }
+            
+            var childIndex = 1
+            let cellMutable = attributedString(
+                element: child,
+                documentBody: documentBody,
+                preserveFormatting: preserveFormatting,
+                listTag: nil,
+                listIndex: &childIndex,
+                indentLevel: 0
+            )
+            
+            // Determine cell alignment
+            let align = (try? child.attr("align")) ?? ""
+            let alignment: TableAttribute.CellAlignment = switch align.lowercased() {
+            case "center": .center
+            case "right": .right
+            default: .left
+            }
+            
+            cells.append(TableAttribute.Cell(content: cellMutable.string, alignment: alignment, isHeader: tag == "th"))
+        }
+        
+        return TableAttribute.Row(cells: cells)
     }
     
     private static func cacheValue(_ value: AttributedString?, forKey key: String, cacheKey: String) {
@@ -463,7 +550,12 @@ nonisolated struct AttributedStringBuilder: AttributedStringBuilderProtocol {
         // Ruma's markdown parsing sometimes inserts extra trailing new lines
         // https://github.com/ruma/ruma/blob/c3dc6de3e03b2ca131eab889a9d310ef160b95ac/crates/ruma-events/src/room/message.rs#L962
         while (attributedString.string as NSString).hasSuffixCharacter(from: .whitespacesAndNewlines) {
-            attributedString.deleteCharacters(in: .init(location: attributedString.length - 1, length: 1))
+            // Preserve characters with custom attributes (e.g. table placeholders)
+            let lastIndex = attributedString.length - 1
+            if attributedString.attribute(.MatrixTable, at: lastIndex, effectiveRange: nil) != nil {
+                break
+            }
+            attributedString.deleteCharacters(in: .init(location: lastIndex, length: 1))
         }
     }
 }

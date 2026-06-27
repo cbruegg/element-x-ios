@@ -19,6 +19,8 @@ nonisolated enum HTMLFixtures: String, CaseIterable {
     case wideCodeBlock
     case unorderedList
     case orderedList
+    case simpleTable
+    case tableWithAlignment
     
     var rawValue: String {
         switch self {
@@ -122,6 +124,26 @@ nonisolated enum HTMLFixtures: String, CaseIterable {
             <li>Starburst</li>
             <li>Skittles</li>
             </ol>
+            """
+        case .simpleTable:
+            """
+            <table>
+            <thead><tr><th>Name</th><th>Role</th><th>Status</th></tr></thead>
+            <tbody>
+            <tr><td>Alice</td><td>Admin</td><td>Active</td></tr>
+            <tr><td>Bob</td><td>Editor</td><td>Inactive</td></tr>
+            </tbody>
+            </table>
+            """
+        case .tableWithAlignment:
+            """
+            <table>
+            <thead><tr><th>Bananas</th><th>User</th></tr></thead>
+            <tbody>
+            <tr><td align="right">500,173</td><td>@offthetop:matrix.org</td></tr>
+            <tr><td align="right">123,456</td><td>@another:matrix.org</td></tr>
+            </tbody>
+            </table>
             """
         }
     }
