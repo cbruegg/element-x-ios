@@ -1012,9 +1012,10 @@ struct AttributedStringBuilderTests {
         #expect(tableData.headerRows[0].cells.count == 2)
         #expect(tableData.bodyRows[0].cells.count == 2)
         
-        #expect(tableData.headerRows[0].cells[0].content == "Name")
-        #expect(tableData.bodyRows[0].cells[0].content == "Alice")
-        #expect(tableData.bodyRows[1].cells[1].content == "Editor")
+        #expect(tableData.headerRows[0].cells[0].content.string == "Name")
+        #expect(tableData.headerRows[0].cells[0].content.runs.first?.uiKit.font?.fontDescriptor.symbolicTraits.contains(.traitBold) == true)
+        #expect(tableData.bodyRows[0].cells[0].content.string == "Alice")
+        #expect(tableData.bodyRows[1].cells[1].content.string == "Editor")
     }
     
     @Test
@@ -1057,9 +1058,24 @@ struct AttributedStringBuilderTests {
         
         let tableData = try #require(tableComponent.attributedString.runs.first(where: { $0.table != nil })?.table, "No table data found")
         
-        // Cell content is stored as plain text (inline formatting is not preserved in cell data)
-        #expect(tableData.bodyRows[0].cells[0].content == "Bold text")
-        #expect(tableData.bodyRows[0].cells[1].content == "Link")
+        #expect(tableData.bodyRows[0].cells[0].content.string == "Bold text")
+        #expect(tableData.bodyRows[0].cells[1].content.string == "Link")
+        let link = tableData.bodyRows[0].cells[1].content.runs.first { $0.link != nil }?.link
+        #expect(link?.absoluteString == "https://matrix.org")
+    }
+    
+    @Test
+    func repeatedTablesHaveUniqueComponentIDs() throws {
+        let htmlString = """
+        <table><tr><td>A</td></tr></table>
+        <table><tr><td>A</td></tr></table>
+        """
+        
+        let attributedString = try #require(attributedStringBuilder.fromHTML(htmlString), "Could not build the attributed string")
+        let tableComponents = attributedString.formattedComponents.filter { $0.type == .table }
+        
+        #expect(tableComponents.count == 2)
+        #expect(Set(tableComponents.map(\.id)).count == 2)
     }
     
     @Test

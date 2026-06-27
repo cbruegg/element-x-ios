@@ -16,6 +16,7 @@ nonisolated extension AttributedString {
     
     var formattedComponents: [AttributedStringBuilderComponent] {
         var components = [AttributedStringBuilderComponent]()
+        var tableIndex = 0
         
         for run in runs[\.blockquote, \.codeBlock, \.table] {
             let isBlockquote = run.0 != nil
@@ -23,13 +24,14 @@ nonisolated extension AttributedString {
             let tableData = run.2
             var attributedString = AttributedString(self[run.3])
             
-            // For table placeholders, use the table data for a stable id and skip newline stripping
+            // For table placeholders, use a unique id and skip newline stripping.
             if let tableData {
                 components.append(AttributedStringBuilderComponent(
-                    id: "table-\(tableData.hashValue)",
+                    id: "table-\(tableIndex)-\(tableData.hashValue)",
                     attributedString: attributedString,
                     type: .table
                 ))
+                tableIndex += 1
                 continue
             }
             

@@ -83,7 +83,7 @@ enum TableAttribute: AttributedStringKey {
     }
     
     struct Cell: Hashable {
-        let content: String
+        let content: AttributedString
         let alignment: CellAlignment
         let isHeader: Bool
     }

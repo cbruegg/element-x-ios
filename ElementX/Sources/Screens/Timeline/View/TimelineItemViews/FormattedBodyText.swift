@@ -226,8 +226,7 @@ struct FormattedBodyText: View {
         private func tableRow(_ row: TableAttribute.Row) -> some View {
             GridRow {
                 ForEach(Array(row.cells.enumerated()), id: \.offset) { _, cell in
-                    Text(cell.content)
-                        .fontWeight(cell.isHeader ? .bold : nil)
+                    FormattedBodyText(attributedString: cell.content)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
                         .frame(maxWidth: .infinity, alignment: frameAlignment(for: cell.alignment))

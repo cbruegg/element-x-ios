@@ -359,7 +359,13 @@ nonisolated struct AttributedStringBuilder: AttributedStringBuilderProtocol {
             default: .left
             }
             
-            cells.append(TableAttribute.Cell(content: cellMutable.string, alignment: alignment, isHeader: tag == "th"))
+            if tag == "th" {
+                let fontPointSize = UIFont.preferredFont(forTextStyle: .body).pointSize
+                cellMutable.setFontPreservingSymbolicTraits(UIFont.boldSystemFont(ofSize: fontPointSize))
+            }
+            
+            let content = (try? AttributedString(cellMutable, including: \.elementX)) ?? AttributedString(cellMutable.string)
+            cells.append(TableAttribute.Cell(content: content, alignment: alignment, isHeader: tag == "th"))
         }
         
         return TableAttribute.Row(cells: cells)
