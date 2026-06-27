@@ -119,7 +119,14 @@ nonisolated struct AttributedStringBuilder: AttributedStringBuilderProtocol {
             if let textNode = node as? TextNode {
                 // If this node is plain text append the whitespace normalised version
                 if node.parent() == documentBody {
-                    result.append(NSAttributedString(string: textNode.text()))
+                    let text = textNode.text()
+                    if text == " ", node.isAdjacentToTableElement {
+                        // SwiftSoup preserves inter-element whitespace (e.g. </table>\n<p>) as a text
+                        // node and normalises it to a single space. Browsers don't render that source-
+                        // formatting space around block-level tables, so drop it to avoid unintended indents.
+                        continue
+                    }
+                    result.append(NSAttributedString(string: text))
                     continue
                 }
                 
@@ -622,5 +629,12 @@ private nonisolated extension NSString {
         let lastChar = character(at: length - 1)
         
         return (characterSet as NSCharacterSet).characterIsMember(lastChar)
+    }
+}
+
+private extension Node {
+    nonisolated var isAdjacentToTableElement: Bool {
+        (previousSibling() as? Element)?.tagName().lowercased() == "table" ||
+            (nextSibling() as? Element)?.tagName().lowercased() == "table"
     }
 }

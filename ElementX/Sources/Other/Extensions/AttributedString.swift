@@ -26,9 +26,11 @@ nonisolated extension AttributedString {
             
             // For table placeholders, use a unique id and skip newline stripping.
             if let tableData {
-                components.append(AttributedStringBuilderComponent(id: "table-\(tableIndex)-\(tableData.hashValue)",
-                                                                   attributedString: attributedString,
-                                                                   type: .table))
+                components.append(AttributedStringBuilderComponent(
+                    id: "table-\(tableIndex)-\(tableData.hashValue)",
+                    attributedString: attributedString,
+                    type: .table
+                ))
                 tableIndex += 1
                 continue
             }
@@ -38,7 +40,7 @@ nonisolated extension AttributedString {
                let range = attributedString.range(of: "\n", options: .backwards, locale: nil) {
                 attributedString.removeSubrange(range)
             }
-            
+
             let componentType: AttributedStringBuilderComponent.ComponentType = switch (isBlockquote, isCodeBlock) {
             case (true, _):
                 .blockquote
@@ -46,13 +48,6 @@ nonisolated extension AttributedString {
                 .codeBlock
             case (false, false):
                 .plainText
-            }
-            
-            // As tables are not rendered inline, having an entry following it like "\nABC"
-            // would result in "ABC" being rendered with indent. This is because SwiftUI
-            // would consider "ABC" a new paragraph.
-            if componentType == .plainText, components.last?.type == .table {
-                attributedString.trimLeadingWhitespace()
             }
             
             components.append(AttributedStringBuilderComponent(id: String(attributedString.characters),
@@ -109,12 +104,5 @@ nonisolated extension AttributedString {
     /// line up with the semibold → bold font switch used by compound.
     mutating func bold() {
         self[startIndex..<endIndex].inlinePresentationIntent = .stronglyEmphasized
-    }
-    
-    private mutating func trimLeadingWhitespace() {
-        while let firstCharacter = characters.first, firstCharacter.isWhitespace {
-            let nextIndex = characters.index(after: startIndex)
-            removeSubrange(startIndex..<nextIndex)
-        }
     }
 }

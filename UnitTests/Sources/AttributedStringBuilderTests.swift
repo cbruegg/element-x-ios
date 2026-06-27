@@ -1120,8 +1120,8 @@ struct AttributedStringBuilderTests {
         
         let plainTextComponents = components.filter { $0.type == .plainText }
         #expect(plainTextComponents.count >= 2)
-        // The text after the table has its leading "\n" trimmed (a parser artefact
-        // that would otherwise render as a visible indent in the bubble).
+        // The source-formatting whitespace between the table and the paragraph is dropped
+        // so it doesn't render as a visible indent in the bubble.
         #expect(plainTextComponents.last?.attributedString.string == "After the table")
     }
     
