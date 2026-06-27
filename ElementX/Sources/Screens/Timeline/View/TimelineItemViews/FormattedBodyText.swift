@@ -94,7 +94,7 @@ struct FormattedBodyText: View {
                     if let tableData = component.attributedString.runs.first(where: { $0.table != nil })?.table {
                         TableView(tableData: tableData)
                             .padding(.horizontal, 4)
-                            .fixedSize(horizontal: true, vertical: true)
+                            .fixedSize(horizontal: false, vertical: true)
                             .timelineBubbleLayoutSize(.natural)
                     }
                 case .plainText:
@@ -196,25 +196,30 @@ struct FormattedBodyText: View {
         let tableData: TableAttribute.Value
         
         var body: some View {
-            Grid(alignment: .leading, horizontalSpacing: 0, verticalSpacing: 0) {
-                ForEach(Array(tableData.headerRows.enumerated()), id: \.offset) { _, row in
-                    tableRow(row)
-                }
-                
-                if !tableData.headerRows.isEmpty && !tableData.bodyRows.isEmpty {
-                    Divider()
-                }
-                
-                ForEach(Array(tableData.bodyRows.enumerated()), id: \.offset) { rowIndex, row in
-                    tableRow(row)
-                    if rowIndex < tableData.bodyRows.count - 1 {
+            ScrollView(.horizontal) {
+                Grid(alignment: .leading, horizontalSpacing: 0, verticalSpacing: 0) {
+                    ForEach(Array(tableData.headerRows.enumerated()), id: \.offset) { _, row in
+                        tableRow(row)
+                    }
+                    
+                    if !tableData.headerRows.isEmpty && !tableData.bodyRows.isEmpty {
                         Divider()
                     }
+                    
+                    ForEach(Array(tableData.bodyRows.enumerated()), id: \.offset) { rowIndex, row in
+                        tableRow(row)
+                        if rowIndex < tableData.bodyRows.count - 1 {
+                            Divider()
+                        }
+                    }
                 }
+                .fixedSize(horizontal: true, vertical: true)
+                .padding(8)
             }
-            .padding(8)
             .background(Color.compound.bgSubtleSecondary)
             .clipShape(RoundedRectangle(cornerRadius: 8))
+            .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
+            .scrollIndicatorsFlash(onAppear: true)
         }
         
         @ViewBuilder
