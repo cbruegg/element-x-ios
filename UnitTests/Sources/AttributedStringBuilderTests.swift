@@ -1065,6 +1065,29 @@ struct AttributedStringBuilderTests {
     }
     
     @Test
+    func tableCellsUseHTMLPostProcessing() throws {
+        let htmlString = """
+        <table>
+        <tbody>
+        <tr><td>#room:matrix.org</td><td><a href="https://evil.org">matrix.org</a></td></tr>
+        </tbody>
+        </table>
+        """
+        
+        let attributedString = try #require(attributedStringBuilder.fromHTML(htmlString), "Could not build the attributed string")
+        let tableComponent = try #require(attributedString.formattedComponents.first { $0.type == .table }, "No table component found")
+        let tableData = try #require(tableComponent.attributedString.runs.first(where: { $0.table != nil })?.table, "No table data found")
+        
+        let roomAliasCell = tableData.bodyRows[0].cells[0].content
+        let roomAliasLink = roomAliasCell.runs.first { $0.link != nil }?.link
+        #expect(roomAliasLink?.absoluteString == "https://matrix.to/#/%23room:matrix.org")
+        
+        let phishingCell = tableData.bodyRows[0].cells[1].content
+        let phishingLink = phishingCell.runs.first { $0.link != nil }?.link
+        #expect(phishingLink?.scheme == URL.confirmationScheme)
+    }
+    
+    @Test
     func repeatedTablesHaveUniqueComponentIDs() throws {
         let htmlString = """
         <table><tr><td>A</td></tr></table>

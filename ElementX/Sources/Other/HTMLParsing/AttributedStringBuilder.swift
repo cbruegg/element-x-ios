@@ -96,10 +96,7 @@ nonisolated struct AttributedStringBuilder: AttributedStringBuilderProtocol {
         
         var listIndex = 1
         let mutableAttributedString = attributedString(element: body, documentBody: body, preserveFormatting: false, listTag: nil, listIndex: &listIndex, indentLevel: 0)
-        detectPhishingAttempts(mutableAttributedString)
-        addLinksAndMentions(mutableAttributedString)
-        addMatrixEntityPermalinkAttributesTo(mutableAttributedString)
-        removeParsingArtefacts(mutableAttributedString)
+        postProcessHTMLAttributedString(mutableAttributedString)
         
         let result = try? AttributedString(mutableAttributedString, including: \.elementX)
         Self.cacheValue(result, forKey: originalHTMLString, cacheKey: cacheKey)
@@ -363,12 +360,20 @@ nonisolated struct AttributedStringBuilder: AttributedStringBuilderProtocol {
                 let fontPointSize = UIFont.preferredFont(forTextStyle: .body).pointSize
                 cellMutable.setFontPreservingSymbolicTraits(UIFont.boldSystemFont(ofSize: fontPointSize))
             }
+            postProcessHTMLAttributedString(cellMutable)
             
             let content = (try? AttributedString(cellMutable, including: \.elementX)) ?? AttributedString(cellMutable.string)
             cells.append(TableAttribute.Cell(content: content, alignment: alignment, isHeader: tag == "th"))
         }
         
         return TableAttribute.Row(cells: cells)
+    }
+    
+    private func postProcessHTMLAttributedString(_ attributedString: NSMutableAttributedString) {
+        detectPhishingAttempts(attributedString)
+        addLinksAndMentions(attributedString)
+        addMatrixEntityPermalinkAttributesTo(attributedString)
+        removeParsingArtefacts(attributedString)
     }
     
     private static func cacheValue(_ value: AttributedString?, forKey key: String, cacheKey: String) {
