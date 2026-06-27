@@ -339,14 +339,12 @@ nonisolated struct AttributedStringBuilder: AttributedStringBuilderProtocol {
             }
             
             var childIndex = 1
-            let cellMutable = attributedString(
-                element: child,
-                documentBody: documentBody,
-                preserveFormatting: preserveFormatting,
-                listTag: nil,
-                listIndex: &childIndex,
-                indentLevel: 0
-            )
+            let cellMutable = attributedString(element: child,
+                                               documentBody: documentBody,
+                                               preserveFormatting: preserveFormatting,
+                                               listTag: nil,
+                                               listIndex: &childIndex,
+                                               indentLevel: 0)
             
             // Determine cell alignment
             let align = (try? child.attr("align")) ?? ""

@@ -1124,7 +1124,7 @@ struct AttributedStringBuilderTests {
         // that would otherwise render as a visible indent in the bubble).
         #expect(plainTextComponents.last?.attributedString.string == "After the table")
     }
-
+    
     @Test
     func tableWithoutExplicitSections() throws {
         let htmlString = "<table><tr><td>A</td><td>B</td></tr><tr><td>C</td><td>D</td></tr></table>"

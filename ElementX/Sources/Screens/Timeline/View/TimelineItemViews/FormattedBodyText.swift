@@ -211,7 +211,7 @@ struct FormattedBodyText: View {
                         tableRow(row)
                     }
                     
-                    if !tableData.headerRows.isEmpty && !tableData.bodyRows.isEmpty {
+                    if !tableData.headerRows.isEmpty, !tableData.bodyRows.isEmpty {
                         Divider()
                     }
                     
@@ -231,7 +231,6 @@ struct FormattedBodyText: View {
             .scrollIndicatorsFlash(onAppear: true)
         }
         
-        @ViewBuilder
         private func tableRow(_ row: TableAttribute.Row) -> some View {
             GridRow {
                 ForEach(Array(row.cells.enumerated()), id: \.offset) { _, cell in
