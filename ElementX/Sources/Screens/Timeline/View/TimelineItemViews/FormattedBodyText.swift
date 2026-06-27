@@ -36,6 +36,15 @@ struct FormattedBodyText: View {
         return adjustedAttributedString.formattedComponents
     }
     
+    private var accessibilityLabel: String {
+        let components = attributedComponents
+        guard components.contains(where: { $0.type == .table }) else {
+            return String(attributedString.characters)
+        }
+        
+        return components.compactMap(\.accessibilityLabel).joined(separator: "\n")
+    }
+    
     init(attributedString: AttributedString,
          trailingReservedSize: CGSize = .zero,
          boostFontSize: Bool = false) {
@@ -54,7 +63,7 @@ struct FormattedBodyText: View {
         layout
             .tint(.compound.textLinkExternal)
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel(Text(attributedString))
+            .accessibilityLabel(Text(verbatim: accessibilityLabel))
     }
     
     /// The attributed components laid out for the bubbles timeline style.
@@ -241,6 +250,32 @@ struct FormattedBodyText: View {
             case .right: return .trailing
             }
         }
+    }
+}
+
+private extension AttributedStringBuilderComponent {
+    var accessibilityLabel: String? {
+        switch type {
+        case .table:
+            return attributedString.runs.first(where: { $0.table != nil })?.table?.accessibilityLabel
+        case .blockquote, .codeBlock, .plainText:
+            let label = String(attributedString.characters).trimmingCharacters(in: .whitespacesAndNewlines)
+            return label.isEmpty ? nil : label
+        }
+    }
+}
+
+private extension TableAttribute.Value {
+    var accessibilityLabel: String {
+        (headerRows + bodyRows).map(\.accessibilityLabel).joined(separator: "\n")
+    }
+}
+
+private extension TableAttribute.Row {
+    var accessibilityLabel: String {
+        cells.map { String($0.content.characters).trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .joined(separator: ", ")
     }
 }
 
