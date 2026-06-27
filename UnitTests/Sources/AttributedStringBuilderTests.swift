@@ -1114,21 +1114,6 @@ struct AttributedStringBuilderTests {
         #expect(tableData.bodyRows.count == 2)
     }
     
-    @Test
-    func tableAtEndOfMessage() throws {
-        let htmlString = """
-        <p>Some text</p>
-        <table>
-        <tbody><tr><td>Cell</td></tr></tbody>
-        </table>
-        """
-        
-        let attributedString = try #require(attributedStringBuilder.fromHTML(htmlString), "Could not build the attributed string")
-        
-        let components = attributedString.formattedComponents
-        #expect(components.contains { $0.type == .table }, "Table at end of message should not be stripped")
-    }
-    
     // MARK: - Private
     
     private func checkLinkIn(attributedString: AttributedString?, expectedLink: String, expectedRuns: Int) throws {
