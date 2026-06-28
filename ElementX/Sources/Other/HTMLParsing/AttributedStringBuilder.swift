@@ -278,7 +278,7 @@ nonisolated struct AttributedStringBuilder: AttributedStringBuilderProtocol {
                     let text = tableData.accessibilityLabel
                     if !text.isEmpty {
                         let placeholder = NSMutableAttributedString(string: text)
-                        placeholder.addAttribute(.MatrixTable, value: tableData, range: NSRange(location: 0, length: (text as NSString).length))
+                        placeholder.addAttribute(.MatrixTable, value: tableData, range: NSRange(location: 0, length: placeholder.length))
                         content = placeholder
                     }
                 }
