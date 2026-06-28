@@ -275,9 +275,12 @@ nonisolated struct AttributedStringBuilder: AttributedStringBuilderProtocol {
                 
             case "table":
                 if let tableData = parseTableData(from: childElement, documentBody: documentBody, preserveFormatting: preserveFormatting) {
-                    let placeholder = NSMutableAttributedString(string: "\n")
-                    placeholder.addAttribute(.MatrixTable, value: tableData, range: NSRange(location: 0, length: 1))
-                    content = placeholder
+                    let text = tableData.accessibilityLabel
+                    if !text.isEmpty {
+                        let placeholder = NSMutableAttributedString(string: text)
+                        placeholder.addAttribute(.MatrixTable, value: tableData, range: NSRange(location: 0, length: (text as NSString).length))
+                        content = placeholder
+                    }
                 }
                 
             case "thead", "tbody", "tfoot", "caption":
@@ -566,12 +569,7 @@ nonisolated struct AttributedStringBuilder: AttributedStringBuilderProtocol {
         // Ruma's markdown parsing sometimes inserts extra trailing new lines
         // https://github.com/ruma/ruma/blob/c3dc6de3e03b2ca131eab889a9d310ef160b95ac/crates/ruma-events/src/room/message.rs#L962
         while (attributedString.string as NSString).hasSuffixCharacter(from: .whitespacesAndNewlines) {
-            // Preserve characters with custom attributes (e.g. table placeholders)
-            let lastIndex = attributedString.length - 1
-            if attributedString.attribute(.MatrixTable, at: lastIndex, effectiveRange: nil) != nil {
-                break
-            }
-            attributedString.deleteCharacters(in: .init(location: lastIndex, length: 1))
+            attributedString.deleteCharacters(in: .init(location: attributedString.length - 1, length: 1))
         }
     }
 }

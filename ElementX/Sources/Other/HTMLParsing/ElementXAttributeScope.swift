@@ -97,6 +97,20 @@ enum TableAttribute: AttributedStringKey {
     static let name = "MXTableAttribute"
 }
 
+extension TableAttribute.Value {
+    nonisolated var accessibilityLabel: String {
+        (headerRows + bodyRows).map(\.accessibilityLabel).joined(separator: "\n")
+    }
+}
+
+private extension TableAttribute.Row {
+    nonisolated var accessibilityLabel: String {
+        cells.map { $0.content.string.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .joined(separator: ", ")
+    }
+}
+
 // periphery: ignore - required to make NSAttributedString to AttributedString conversion even if not used directly
 nonisolated extension AttributeScopes {
     struct ElementXAttributes: AttributeScope {

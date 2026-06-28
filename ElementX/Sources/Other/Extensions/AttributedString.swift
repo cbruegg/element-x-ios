@@ -24,7 +24,7 @@ nonisolated extension AttributedString {
             let tableData = run.2
             var attributedString = AttributedString(self[run.3])
             
-            // For table placeholders, use a unique id and skip newline stripping.
+            // Use a unique id for tables that have the same textual representation.
             if let tableData {
                 components.append(AttributedStringBuilderComponent(id: "table-\(tableIndex)-\(tableData.hashValue)",
                                                                    attributedString: attributedString,
