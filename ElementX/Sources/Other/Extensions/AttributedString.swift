@@ -26,11 +26,9 @@ nonisolated extension AttributedString {
             
             // For table placeholders, use a unique id and skip newline stripping.
             if let tableData {
-                components.append(AttributedStringBuilderComponent(
-                    id: "table-\(tableIndex)-\(tableData.hashValue)",
-                    attributedString: attributedString,
-                    type: .table
-                ))
+                components.append(AttributedStringBuilderComponent(id: "table-\(tableIndex)-\(tableData.hashValue)",
+                                                                   attributedString: attributedString,
+                                                                   type: .table))
                 tableIndex += 1
                 continue
             }
@@ -40,7 +38,7 @@ nonisolated extension AttributedString {
                let range = attributedString.range(of: "\n", options: .backwards, locale: nil) {
                 attributedString.removeSubrange(range)
             }
-
+            
             let componentType: AttributedStringBuilderComponent.ComponentType = switch (isBlockquote, isCodeBlock) {
             case (true, _):
                 .blockquote
