@@ -94,13 +94,64 @@ struct CI: ParsableCommand {
     
     /// Zips xcresult bundles in the test output directory for faster artifact uploads.
     static func zipResults(bundles: [String], outputName: String) async {
-        let bundleArgs = bundles.joined(separator: " ")
+        let existingBundles = bundles.filter { FileManager.default.fileExists(atPath: "\(testOutputDirectory)/\($0)") }
+        guard !existingBundles.isEmpty else {
+            logger.info("\nNo test results found to zip.\n")
+            return
+        }
+        
+        let bundleArgs = existingBundles.joined(separator: " ")
         do {
             logger.info("\n📦 Zipping test results…")
             try await run(.path("/bin/zsh"), ["-cu", "cd \(testOutputDirectory) && zip -rq \(outputName) \(bundleArgs)"])
             logger.info("📦 Zipped: \(testOutputDirectory)/\(outputName)\n")
         } catch {
             logger.error("\n❌ Failed to zip results: \(error.localizedDescription)\n")
+        }
+    }
+    
+    /// Copies newly rendered failing preview snapshots out of the simulator container so they are included in CI artifacts.
+    static func collectFailedPreviewSnapshots(resultBundle: String, outputDirectory: String = "FailedPreviewSnapshots") async {
+        let resultBundlePath = "\(testOutputDirectory)/\(resultBundle)"
+        guard FileManager.default.fileExists(atPath: resultBundlePath) else {
+            return
+        }
+        
+        let attachmentsDirectory = URL(fileURLWithPath: testOutputDirectory).appending(path: "PreviewFailureAttachments", directoryHint: .isDirectory)
+        let snapshotsDirectory = URL(fileURLWithPath: testOutputDirectory).appending(path: outputDirectory, directoryHint: .isDirectory)
+        try? FileManager.default.removeItem(at: attachmentsDirectory)
+        try? FileManager.default.removeItem(at: snapshotsDirectory)
+        
+        do {
+            try FileManager.default.createDirectory(at: attachmentsDirectory, withIntermediateDirectories: true)
+            try FileManager.default.createDirectory(at: snapshotsDirectory, withIntermediateDirectories: true)
+            try await run(.name("xcrun"), ["xcresulttool", "export", "attachments", "--path", resultBundlePath, "--output-path", attachmentsDirectory.path])
+            
+            var copiedSnapshots = Set<String>()
+            for textFile in try FileManager.default.contentsOfDirectory(at: attachmentsDirectory, includingPropertiesForKeys: nil) where textFile.pathExtension == "txt" {
+                let description = try String(contentsOf: textFile, encoding: .utf8)
+                let snapshotURLs = description.components(separatedBy: .whitespacesAndNewlines)
+                    .compactMap { rawValue -> URL? in
+                        let trimmedValue = rawValue.trimmingCharacters(in: CharacterSet(charactersIn: "\""))
+                        guard trimmedValue.hasPrefix("file://"), trimmedValue.contains("/tmp/PreviewTests/"), trimmedValue.hasSuffix(".png") else {
+                            return nil
+                        }
+                        return URL(string: trimmedValue)
+                    }
+                
+                for snapshotURL in snapshotURLs {
+                    let destinationURL = snapshotsDirectory.appending(path: snapshotURL.lastPathComponent)
+                    try? FileManager.default.removeItem(at: destinationURL)
+                    try FileManager.default.copyItem(at: snapshotURL, to: destinationURL)
+                    copiedSnapshots.insert(destinationURL.lastPathComponent)
+                }
+                
+                try FileManager.default.copyItem(at: textFile, to: snapshotsDirectory.appending(path: textFile.lastPathComponent))
+            }
+            
+            logger.info("\n📸 Collected \(copiedSnapshots.count) failed preview snapshot(s) in \(testOutputDirectory)/\(outputDirectory).\n")
+        } catch {
+            logger.error("\n❌ Failed to collect failed preview snapshots: \(error.localizedDescription)\n")
         }
     }
     

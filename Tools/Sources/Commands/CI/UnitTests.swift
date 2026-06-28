@@ -40,7 +40,7 @@ struct UnitTests: AsyncParsableCommand {
         }
         
         // Zip results (best-effort, useful for CI artifact uploads)
-        await CI.zipResults(bundles: ["UnitTests.xcresult", "PreviewTests.xcresult"],
+        await CI.zipResults(bundles: ["UnitTests.xcresult", "PreviewTests.xcresult", "FailedPreviewSnapshots"],
                             outputName: "UnitTests.zip")
         
         // Collect coverage and JUnit results for unit tests
