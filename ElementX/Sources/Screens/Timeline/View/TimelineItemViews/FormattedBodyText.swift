@@ -37,12 +37,7 @@ struct FormattedBodyText: View {
     }
     
     private var accessibilityLabel: String {
-        let components = attributedComponents
-        guard components.contains(where: { $0.type == .table }) else {
-            return String(attributedString.characters)
-        }
-        
-        return components.compactMap(\.accessibilityLabel).joined(separator: "\n")
+        attributedComponents.map(\.accessibilityLabel).joined(separator: "\n")
     }
     
     init(attributedString: AttributedString,
@@ -253,13 +248,12 @@ struct FormattedBodyText: View {
 }
 
 private extension AttributedStringBuilderComponent {
-    var accessibilityLabel: String? {
+    var accessibilityLabel: String {
         switch type {
         case .table:
-            return attributedString.runs.first(where: { $0.table != nil })?.table?.accessibilityLabel
+            return attributedString.runs.first(where: { $0.table != nil })?.table?.accessibilityLabel ?? ""
         case .blockquote, .codeBlock, .plainText:
-            let label = String(attributedString.characters).trimmingCharacters(in: .whitespacesAndNewlines)
-            return label.isEmpty ? nil : label
+            return String(attributedString.characters)
         }
     }
 }
