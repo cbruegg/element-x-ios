@@ -89,6 +89,7 @@ enum TableAttribute: AttributedStringKey {
     }
     
     struct Value: Hashable {
+        let id = UUID()
         let headerRows: [Row]
         let bodyRows: [Row]
     }
