@@ -106,7 +106,6 @@ extension TableAttribute.Value {
 private extension TableAttribute.Row {
     nonisolated var accessibilityLabel: String {
         cells.map { $0.content.string.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
             .joined(separator: ", ")
     }
 }
