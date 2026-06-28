@@ -140,8 +140,8 @@ nonisolated enum HTMLFixtures: String, CaseIterable {
             <table>
             <thead><tr><th>Bananas</th><th>User</th></tr></thead>
             <tbody>
-            <tr><td align="right">500,173</td><td>@offthetop:matrix.org</td></tr>
-            <tr><td align="right">123,456</td><td>@another:matrix.org</td></tr>
+            <tr><td align="right">500,173</td><td>Top contributor</td></tr>
+            <tr><td align="right">123,456</td><td>Runner up</td></tr>
             </tbody>
             </table>
             """
