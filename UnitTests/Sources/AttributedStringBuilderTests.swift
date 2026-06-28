@@ -1102,7 +1102,7 @@ struct AttributedStringBuilderTests {
     }
     
     @Test
-    func tableWithSurroundingText() throws {
+    func tableBetweenParagraphsDropsSourceFormattingWhitespace() throws {
         let htmlString = """
         <p>Before the table</p>
         <table>
@@ -1115,14 +1115,16 @@ struct AttributedStringBuilderTests {
         
         let components = attributedString.formattedComponents
         
-        #expect(components.contains { $0.type == .plainText })
-        #expect(components.contains { $0.type == .table })
+        #expect(components.count == 3)
+        #expect(components.map(\.type) == [.plainText, .table, .plainText])
+        #expect(components[0].attributedString.string == "Before the table")
         
-        let plainTextComponents = components.filter { $0.type == .plainText }
-        #expect(plainTextComponents.count >= 2)
+        let tableData = try #require(components[1].attributedString.runs.first(where: { $0.table != nil })?.table, "No table data found")
+        #expect(tableData.bodyRows[0].cells[0].content.string == "Cell")
+        
         // The source-formatting whitespace between the table and the paragraph is dropped
         // so it doesn't render as a visible indent in the bubble.
-        #expect(plainTextComponents.last?.attributedString.string == "After the table")
+        #expect(components[2].attributedString.string == "After the table")
     }
     
     @Test
