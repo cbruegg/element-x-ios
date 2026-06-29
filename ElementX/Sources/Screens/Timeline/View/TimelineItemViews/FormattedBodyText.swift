@@ -91,6 +91,7 @@ struct FormattedBodyText: View {
                             }
                         }
                 case .table:
+                    // Tables are split into individual components by `formattedComponents`, so there is only one table run here.
                     if let tableData = component.attributedString.runs.first(where: { $0.table != nil })?.table {
                         TableView(tableData: tableData)
                             .padding(.horizontal, 4)
