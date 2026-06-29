@@ -16,11 +16,22 @@ nonisolated extension AttributedString {
     
     var formattedComponents: [AttributedStringBuilderComponent] {
         var components = [AttributedStringBuilderComponent]()
+        var tableIndex = 0
         
-        for run in runs[\.blockquote, \.codeBlock] {
+        for run in runs[\.blockquote, \.codeBlock, \.table] {
             let isBlockquote = run.0 != nil
             let isCodeBlock = run.1 != nil
-            var attributedString = AttributedString(self[run.2])
+            let tableData = run.2
+            var attributedString = AttributedString(self[run.3])
+            
+            // Use a unique id for tables that have the same textual representation.
+            if let tableData {
+                components.append(AttributedStringBuilderComponent(id: "table-\(tableIndex)-\(tableData.hashValue)",
+                                                                   attributedString: attributedString,
+                                                                   type: .table))
+                tableIndex += 1
+                continue
+            }
             
             // Remove trailing new lines if any
             if attributedString.characters.last?.isNewline ?? false,

@@ -73,6 +73,43 @@ enum InlineCodeAttribute: AttributedStringKey {
     static let name = "MXInlineCodeAttribute"
 }
 
+enum TableAttribute: AttributedStringKey {
+    enum CellAlignment: Hashable {
+        case left, center, right
+    }
+    
+    struct Row: Hashable {
+        let cells: [Cell]
+    }
+    
+    struct Cell: Hashable {
+        let content: AttributedString
+        let alignment: CellAlignment
+        let isHeader: Bool
+    }
+    
+    struct Value: Hashable {
+        let id = UUID()
+        let headerRows: [Row]
+        let bodyRows: [Row]
+    }
+    
+    static let name = "MXTableAttribute"
+}
+
+extension TableAttribute.Value {
+    nonisolated var accessibilityLabel: String {
+        (headerRows + bodyRows).map(\.accessibilityLabel).joined(separator: "\n")
+    }
+}
+
+private extension TableAttribute.Row {
+    nonisolated var accessibilityLabel: String {
+        cells.map { $0.content.string.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .joined(separator: ", ")
+    }
+}
+
 // periphery: ignore - required to make NSAttributedString to AttributedString conversion even if not used directly
 nonisolated extension AttributeScopes {
     struct ElementXAttributes: AttributeScope {
@@ -90,6 +127,7 @@ nonisolated extension AttributeScopes {
         
         let codeBlock: CodeBlockAttribute
         let inlineCode: InlineCodeAttribute
+        let table: TableAttribute
         
         let swiftUI: SwiftUIAttributes
         let uiKit: UIKitAttributes
