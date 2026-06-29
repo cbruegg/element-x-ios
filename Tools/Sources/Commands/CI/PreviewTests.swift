@@ -51,9 +51,6 @@ struct PreviewTests: AsyncParsableCommand {
         // Collect coverage and test results regardless of test outcome (best-effort).
         await CI.collectCoverage(resultBundle: "\(Self.scheme).xcresult", outputName: "preview-cobertura.xml")
         await CI.collectTestResults(resultBundle: "\(Self.scheme).xcresult", outputName: "preview-junit.xml")
-        if testsFailed {
-            await CI.collectFailedPreviewSnapshots(resultBundle: "\(Self.scheme).xcresult")
-        }
         
         if testsFailed {
             throw ExitCode.failure
